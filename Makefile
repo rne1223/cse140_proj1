@@ -65,15 +65,14 @@ remove: clean
 	@echo "Executable removed!
 
 debug:
-	 gdb --args $(BINDIR)/$(TARGET) $(BINDIR)/$(TARGS)
+	 gdb --args $(BINDIR)/$(TARGET) $(SRCDIR)/$(TARGS)
 
 run:
 	@echo RUN TARGET NORMALLY
-	 $(BINDIR)/$(TARGET) $(BINDIR)/$(TARGS)
-
+	 $(BINDIR)/$(TARGET) $(SRCDIR)/$(TARGS) 
 test:
 	@echo Running TESTS....
-	 $(BINDIR)/vimdiff sample.output test.output
+	 # $(BINDIR)/vimdiff sample.output test.output
 	
 
 
