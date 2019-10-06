@@ -96,7 +96,6 @@ void Simulate () {
 	 * Note that we reuse the d struct for each instruction.
 	 */
         Decode (instr, &d, &rVals);
-        break;
 
         /*Print decoded instruction*/
         PrintInstruction(&d);
@@ -126,6 +125,7 @@ void Simulate () {
         RegWrite(&d, val, &changedReg);
 
         PrintInfo (changedReg, changedMem);
+        break;
     }
 }
 
@@ -184,32 +184,43 @@ unsigned int Fetch ( int addr) {
 /* Decode instr, returning decoded instruction. */
 void Decode ( unsigned int instr, DecodedInstr* d, RegVals* rVals) {
 
-    d->op = instr>>26;
+  int inst_op = instr>>26;  // get the first 6bits
 
-    // Find which type of instruction
-    printf("%d \n", d->op);
-    printf("%d \n", d->regs.r.rs);
-    /* d->r.rs = 0; */
-    /* d.r.rs = 0; */
-    /* d.r.rs = 0; */
-    /* d.r.rs = 0; */
+  // TODO
+  // Find which type of instruction it is
+  // and get all the values
+  //    - Get op
+  //    - If op is 0 then R format
+  //            Get fucnt
+  //            - IF funct is 0 then sll
+  //            - Else iF funct is 2 then srl
+  //            - Else iF funct is 8 then jr
+  //            - Else if funct is 32 then add
+  //            - Else if funct is 33 then addu
+  //            - Else if funct is 34 then sub
+  //            - Else if funct is 35 then subu
+  //            - Else if funct is 36 then and
+  //            - Else if funct is 37 then or
+  //            - Else if funct is 39 then nor
+  //            - Else if funct is 42 then slt
+  //            - Else if funct is 43 then sltu
+  //    - Else if op is 2 or 3 then J format  
+  //    
+  //    - Else is I format
+  // Depending on the type of instruction store the registers
+  /* printf("%d \n", inst_op); */
+  /* printf("%d \n", inst_funct); */
 
-/* typedef struct { */
-/*   InstrType type; */
-/*   int op; */
-/*   union { */
-/*     RRegs r; */
-/*     IRegs i; */
-/*     JRegs j; */
-/*   } regs; */
-/* } DecodedInstr; */
+  /* typedef struct { */
+  /*   InstrType type; */
+  /*   int op; */
+  /*   union { */
+  /*     RRegs r; */
+  /*     IRegs i; */
+  /*     JRegs j; */
+  /*   } regs; */
+  /* } DecodedInstr; */
 
-/*   int rs; */
-/*   int rt; */
-/*   int rd; */
-/*   int shamt; */
-/*   int funct; */
-/* } RRegs; */
 }
 
 /*
