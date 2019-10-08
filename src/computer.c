@@ -1,8 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <netinet/in.h>
+#include <string.h>
 #include "computer.h"
 #undef mips			/* gcc already has a def for mips */
+
+
+/** 
+ * Defining some constants to retrieve bits 
+ **/
+#define BITS_5  0x1f
+#define BITS_6  0x3f
+#define BITS_16 0xffff
+#define BITS_26 0x3ffffff
 
 unsigned int endianSwap(unsigned int);
 
@@ -16,6 +26,7 @@ int Mem(DecodedInstr*, int, int *);
 void RegWrite(DecodedInstr*, int, int *);
 void UpdatePC(DecodedInstr*, int);
 void PrintInstruction (DecodedInstr*);
+void getOpName(DecodedInstr*);
 
 /*Globally accessible Computer variable*/
 Computer mips;
@@ -75,6 +86,7 @@ void Simulate () {
     int changedReg=-1, changedMem=-1, val;
     DecodedInstr d;
     
+    int i = 0;
     /* Initialize the PC to the start of the code section */
     mips.pc = 0x00400000;
     while (1) {
@@ -125,7 +137,15 @@ void Simulate () {
         RegWrite(&d, val, &changedReg);
 
         PrintInfo (changedReg, changedMem);
-        break;
+
+        printf("\n");
+        /***
+         * limit amount
+         * remove this when turn it in
+         */
+        if(i > 4)
+          break;
+        i++;
     }
 }
 
@@ -181,54 +201,211 @@ unsigned int Fetch ( int addr) {
     return mips.memory[(addr-0x00400000)/4];
 }
 
+// Get the op name 
+void getOpName(char * funct_name, DecodedInstr* d){
+
+  int funct = 0;
+  int op = 0;
+
+  switch (d->type) {
+    
+    case 0: // R-format functions
+
+        funct = d->regs.r.funct; // get the fucnt from d , less typing
+
+        switch (funct) {
+
+          case 0:
+            strcpy(funct_name,"sll");
+            break;
+          case 2:
+            strcpy(funct_name,"srl");
+            break;
+          case 8:
+            strcpy(funct_name,"jr");
+            break;
+          case 32:
+            strcpy(funct_name,"add");
+            break;
+          case 33:
+            strcpy(funct_name,"addu");
+            break;
+          case 34:
+            strcpy(funct_name,"sub");
+            break;
+          case 35:
+            strcpy(funct_name,"subu");
+            break;
+          case 36:
+            strcpy(funct_name,"and");
+            break;
+          case 37:
+            strcpy(funct_name,"or");
+            break;
+          case 39:
+            strcpy(funct_name,"nor");
+            break;
+          case 42:
+            strcpy(funct_name,"slt");
+            break;
+          case 43:
+            strcpy(funct_name,"sltu");
+            break;
+        }
+      break;
+    
+    case 1: // I-Format functions
+
+      op = d->op;
+
+      switch (op) {
+        case 4:
+         strcpy(funct_name,"beq");
+          break;
+        case 5:
+         strcpy(funct_name,"bne");
+          break;
+        case 8:
+         strcpy(funct_name,"addi");
+          break;
+        case 9:
+         strcpy(funct_name,"addiu");
+          break;
+        case 10:
+         strcpy(funct_name,"slti");
+          break;
+        case 11:
+         strcpy(funct_name,"sltiu");
+          break;
+        case 12:
+         strcpy(funct_name,"andi");
+          break;
+        case 13:
+         strcpy(funct_name,"ori");
+          break;
+        case 15:
+         strcpy(funct_name,"lui");
+          break;
+        case 35:
+         strcpy(funct_name,"lw");
+          break;
+        case 43:
+         strcpy(funct_name,"sw");
+          break;
+      }
+
+    case 2: // J-format functions
+      op = d->op;
+
+      switch (op) {
+        case 2:
+          strcpy(funct_name,"j");
+          break;
+        case 3:
+          strcpy(funct_name,"jal");
+          break;
+      }
+      break;
+
+  }
+}
+
 /* Decode instr, returning decoded instruction. */
 void Decode ( unsigned int instr, DecodedInstr* d, RegVals* rVals) {
 
   int inst_op = instr>>26;  // get the first 6bits
+  d->op = inst_op;
 
-  // TODO
-  // Find which type of instruction it is
-  // and get all the values
-  //    - Get op
-  //    - If op is 0 then R format
-  //            Get fucnt
-  //            - IF funct is 0 then sll
-  //            - Else iF funct is 2 then srl
-  //            - Else iF funct is 8 then jr
-  //            - Else if funct is 32 then add
-  //            - Else if funct is 33 then addu
-  //            - Else if funct is 34 then sub
-  //            - Else if funct is 35 then subu
-  //            - Else if funct is 36 then and
-  //            - Else if funct is 37 then or
-  //            - Else if funct is 39 then nor
-  //            - Else if funct is 42 then slt
-  //            - Else if funct is 43 then sltu
-  //    - Else if op is 2 or 3 then J format  
-  //    
-  //    - Else is I format
-  // Depending on the type of instruction store the registers
-  /* printf("%d \n", inst_op); */
-  /* printf("%d \n", inst_funct); */
+  /** 
+   * Retrive Regiters 
+   **/
+  //If op is 0 then R format
+  if(inst_op == 0) {
 
-  /* typedef struct { */
-  /*   InstrType type; */
-  /*   int op; */
-  /*   union { */
-  /*     RRegs r; */
-  /*     IRegs i; */
-  /*     JRegs j; */
-  /*   } regs; */
-  /* } DecodedInstr; */
+    d->type = 0; 
 
+    // Get R-format registers
+    RRegs rregs;
+    rregs.rs    = (instr >> 21) & BITS_5;
+    rregs.rt    = (instr >> 16) & BITS_5;
+    rregs.rd    = (instr >> 11) & BITS_5;
+    rregs.shamt = (instr >> 6) & BITS_5;
+    rregs.funct = instr & BITS_6;
+
+    // put values into rVals
+    rVals->R_rs = rregs.rs;
+    rVals->R_rt = rregs.rt;
+    rVals->R_rd = rregs.rd;
+    
+    // put values in d
+    d->regs.r = rregs;
+    
+    //Else if op is 2 or 3 then J format  
+  }else if(inst_op == 2 || inst_op == 3 ) {
+
+    d->type = 2; 
+
+    //get addr
+    JRegs jregs;
+    jregs.target = instr & BITS_26;
+
+    // nothing to put here
+    rVals->R_rs = -1;
+    rVals->R_rt = -1;
+    rVals->R_rd = jregs.target;
+
+    d->regs.j = jregs;
+
+  //Else is I format
+  }else {
+
+    d->type = 1; //I-format
+
+    // Get I-format registers and immed
+    IRegs iregs;
+    iregs.rs = (instr >> 21) & BITS_5;
+    iregs.rt = (instr >> 16) & BITS_5;
+    iregs.addr_or_immed = instr & BITS_16;
+    
+    // put values in rVals
+    rVals->R_rs = iregs.rs;
+    rVals->R_rt = iregs.rt;
+    rVals->R_rd = iregs.addr_or_immed;
+
+    // put values in d
+    d->regs.i = iregs;
+  }
 }
+
 
 /*
  *  Print the disassembled version of the given instruction
  *  followed by a newline.
  */
 void PrintInstruction ( DecodedInstr* d) {
-    /* Your code goes here */
+
+  char opName[6] = " ";
+  getOpName(opName, d);
+
+  printf("%s ", opName);
+
+  // if is a J-format then print only the address
+  if(d->type == 2){
+    printf("%#010x\n", rVals.R_rd);
+    return;
+  }
+
+  // If there is an rs val then print it
+  if(rVals.R_rs > -1)
+    printf("$%d, ", rVals.R_rs);
+
+  // If there is an rt val then print it
+  if(rVals.R_rt > -1)
+    printf("$%d, ", rVals.R_rt);
+
+  // If there is an rd val then print it
+  if(rVals.R_rd > -1)
+    printf("$%d\n", rVals.R_rd);
 }
 
 /* Perform computation needed to execute d, returning computed value */
