@@ -2,11 +2,7 @@
 
 To compile:
   make
-To run:
-  make run
 
-To get into interactive mode:
+To run:
   make runi
 
-To get into gdb:
-  make debug
