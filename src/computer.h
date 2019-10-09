@@ -1,6 +1,13 @@
 
 #define MAXNUMINSTRS 1024	/* max # instrs in a program */
 #define MAXNUMDATA 3072		/* max # data words */
+/** 
+ * Defining some constants to retrieve bits 
+ **/
+#define BITS_5  0x1f
+#define BITS_6  0x3f
+#define BITS_16 0xffff
+#define BITS_26 0x3ffffff
 
 struct SimulatedComputer {
     int memory [MAXNUMINSTRS+MAXNUMDATA];

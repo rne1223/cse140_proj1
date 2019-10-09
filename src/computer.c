@@ -6,14 +6,6 @@
 #undef mips			/* gcc already has a def for mips */
 
 
-/** 
- * Defining some constants to retrieve bits 
- **/
-#define BITS_5  0x1f
-#define BITS_6  0x3f
-#define BITS_16 0xffff
-#define BITS_26 0x3ffffff
-
 unsigned int endianSwap(unsigned int);
 
 // Function Definitions
@@ -26,7 +18,7 @@ int Mem(DecodedInstr*, int, int *);
 void RegWrite(DecodedInstr*, int, int *);
 void UpdatePC(DecodedInstr*, int);
 void PrintInstruction (DecodedInstr*);
-void getOpName(DecodedInstr*);
+void getOpName(char *, DecodedInstr*);
 
 /*Globally accessible Computer variable*/
 Computer mips;
@@ -85,17 +77,33 @@ void Simulate () {
     unsigned int instr;
     int changedReg=-1, changedMem=-1, val;
     DecodedInstr d;
+
     
-    int i = 0;
     /* Initialize the PC to the start of the code section */
     mips.pc = 0x00400000;
+
+    /** 
+     * created my own tmp mips
+     * for easier debugging in interactive mode
+     */
+    Computer tmp_mips; 
+    tmp_mips = mips;
+
     while (1) {
         if (mips.interactive) {
             printf ("> ");
             fgets (s,sizeof(s),stdin);
             if (s[0] == 'q') {
                 return;
-            }
+            }else if(s[0] == 'm'){
+              mips.printingMemory = 1;
+              mips.pc-=4; // update PC to stay with the current instruction
+            }else if(s[0] == 'r'){
+              mips.printingRegisters = 1;
+              mips.pc-=4; // update PC to stay with the current instruction
+            }else if(s[0] == 'n'){ 
+              mips.pc+=4; // update PC to stay with the current instruction
+            }        
         }
 
         /* Fetch instr at mips.pc, returning it in instr */
@@ -139,13 +147,10 @@ void Simulate () {
         PrintInfo (changedReg, changedMem);
 
         printf("\n");
-        /***
-         * limit amount
-         * remove this when turn it in
-         */
-        if(i > 4)
-          break;
-        i++;
+
+        // For Debugging Purposes :p
+        mips.printingMemory = tmp_mips.printingMemory;
+        mips.printingRegisters = tmp_mips.printingRegisters;
     }
 }
 
@@ -316,12 +321,11 @@ void Decode ( unsigned int instr, DecodedInstr* d, RegVals* rVals) {
   int inst_op = instr>>26;  // get the first 6bits
   d->op = inst_op;
 
-  /** 
-   * Retrive Regiters 
-   **/
-  //If op is 0 then R format
+  /** Retrive Regiters **/
+  //If op is 0 then R-format
   if(inst_op == 0) {
 
+    // declare the instruction to be R-format
     d->type = 0; 
 
     // Get R-format registers
@@ -343,6 +347,7 @@ void Decode ( unsigned int instr, DecodedInstr* d, RegVals* rVals) {
     //Else if op is 2 or 3 then J format  
   }else if(inst_op == 2 || inst_op == 3 ) {
 
+    // declare the instruction to be J-format
     d->type = 2; 
 
     //get addr
@@ -359,7 +364,8 @@ void Decode ( unsigned int instr, DecodedInstr* d, RegVals* rVals) {
   //Else is I format
   }else {
 
-    d->type = 1; //I-format
+    // declare the instruction to be I-format
+    d->type = 1;
 
     // Get I-format registers and immed
     IRegs iregs;
@@ -389,23 +395,45 @@ void PrintInstruction ( DecodedInstr* d) {
 
   printf("%s ", opName);
 
-  // if is a J-format then print only the address
-  if(d->type == 2){
-    printf("%#010x\n", rVals.R_rd);
-    return;
+
+  // R-format print
+  if(d->type == 0) {
+    if(!strcmp(opName, "jr")){ // if jr then only print two values
+      printf(" %#010x\n", d->regs.r.rs);
+    }else{
+      printf(" $%d, $%d, $%d\n", d->regs.r.rs,d->regs.r.rt,d->regs.r.rd);
+    }
+  }else if(d->type ==1){
+    if(!strcmp(opName, "lui")){
+      printf(" $%d, %#010x\n", d->regs.i.rt,d->regs.i.addr_or_immed);
+    } else if(!strcmp(opName, "")){
+
+    }
+    else{
+      printf(" $%d, $%d, %#010x\n", 
+          d->regs.i.rt,d->regs.i.rs,d->regs.i.addr_or_immed);
+    }
+  }else{
+   printf("%#010x\n", d->regs.j.target); 
   }
 
-  // If there is an rs val then print it
-  if(rVals.R_rs > -1)
-    printf("$%d, ", rVals.R_rs);
-
-  // If there is an rt val then print it
-  if(rVals.R_rt > -1)
-    printf("$%d, ", rVals.R_rt);
-
-  // If there is an rd val then print it
-  if(rVals.R_rd > -1)
-    printf("$%d\n", rVals.R_rd);
+  // if is a J-format then print only the address
+  /* if(d->type == 2){ */
+  /*   printf("%#010x\n", rVals.R_rd); */
+  /*   return; */
+  /* } */
+  /*  */
+  /* // If there is an rs val then print it */
+  /* if(rVals.R_rs > -1) */
+  /*   printf("$%d, ", rVals.R_rs); */
+  /*  */
+  /* // If there is an rt val then print it */
+  /* if(rVals.R_rt > -1) */
+  /*   printf("$%d, ", rVals.R_rt); */
+  /*  */
+  /* // If there is an rd val then print it */
+  /* if(rVals.R_rd > -1) */
+  /*   printf("$%d\n", rVals.R_rd); */
 }
 
 /* Perform computation needed to execute d, returning computed value */

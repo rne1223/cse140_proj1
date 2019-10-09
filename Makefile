@@ -15,7 +15,7 @@
 # project name (generate executable with this name)
 TARGET   = sim
 #target arguments
-TARGS    = sample.dump
+TARGS    = test.dump
 
 CC       = gcc
 # compiling flags here
@@ -54,7 +54,7 @@ $(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c
 ###########
 # Rules
 ##########
-.PHONY: clean remove debug run test
+.PHONY: clean remove debug run run_i test
 
 clean:
 	@$(rm) $(OBJECTS)
@@ -66,6 +66,10 @@ remove: clean
 
 debug:
 	 gdb --args $(BINDIR)/$(TARGET) $(SRCDIR)/$(TARGS)
+
+
+run_i:
+	 $(BINDIR)/$(TARGET) -i $(SRCDIR)/$(TARGS) 
 
 run:
 	@echo RUN TARGET NORMALLY
