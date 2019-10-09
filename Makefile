@@ -54,7 +54,7 @@ $(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c
 ###########
 # Rules
 ##########
-.PHONY: clean remove debug run run_i test
+.PHONY: clean remove debug run runi test
 
 clean:
 	@$(rm) $(OBJECTS)
@@ -68,7 +68,7 @@ debug:
 	 gdb --args $(BINDIR)/$(TARGET) $(SRCDIR)/$(TARGS)
 
 
-run_i:
+runi:
 	 $(BINDIR)/$(TARGET) -i $(SRCDIR)/$(TARGS) 
 
 run:
