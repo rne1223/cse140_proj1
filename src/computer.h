@@ -4,11 +4,12 @@
 /** 
  * Defining some constants to retrieve bits 
  **/
-#define BITS_5  0x1f
-#define BITS_6  0x3f
-#define BITS_16 0xffff
-#define BITS_26 0x3ffffff
-
+#define MASK_5      0x1f
+#define MASK_6      0x3f
+#define MASK_16     0xffff
+#define MASK_26     0x3ffffff
+// #define MASK_32     0xffffffff
+#define MASK_UPPER  0xffff0000
 struct SimulatedComputer {
     int memory [MAXNUMINSTRS+MAXNUMDATA];
     int registers [32];

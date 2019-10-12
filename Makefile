@@ -16,6 +16,8 @@
 TARGET   = sim
 #target arguments
 TARGS    = test.dump
+TARGS2   = test2.dump
+TARGS3   = sample.dump
 
 CC       = gcc
 # compiling flags here
@@ -54,7 +56,7 @@ $(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c
 ###########
 # Rules
 ##########
-.PHONY: clean remove debug run runi test
+.PHONY: clean remove debug run run2 run3 runi test
 
 clean:
 	@$(rm) $(OBJECTS)
@@ -71,9 +73,21 @@ debug:
 runi:
 	 $(BINDIR)/$(TARGET) -i $(SRCDIR)/$(TARGS) 
 
+runi2:
+	 $(BINDIR)/$(TARGET) -i $(SRCDIR)/$(TARGS2) 
+
+runi3:
+	 $(BINDIR)/$(TARGET) -i $(SRCDIR)/$(TARGS3) 
+
 run:
-	@echo RUN TARGET NORMALLY
+	# @echo 
 	 $(BINDIR)/$(TARGET) $(SRCDIR)/$(TARGS) 
+run2:
+	@echo 
+	 $(BINDIR)/$(TARGET) $(SRCDIR)/$(TARGS2) 
+run3:
+	@echo 
+	 $(BINDIR)/$(TARGET) $(SRCDIR)/$(TARGS3) 
 test:
 	@echo Running TESTS....
 	 # $(BINDIR)/vimdiff sample.output test.output

@@ -1,12 +1,27 @@
 .text
 
 main:
-	; addi $a1, $zero, -4
-	; addi $a2, $a1, 2
-	; addi $a3, $a2, 3
-	; jal testInstructions
+	addi $a1, $zero, -4
+	addi $a2, $a1, 2
+	addi $a3, $a2, 3
+	jal testInstructions
 
 	j end
+
+notequals:
+	addi $sp, $sp, -4
+	sw $a3, 4($sp)
+	j equals
+
+equals:
+	lw $t5, 4($sp)
+	beq $zero, $zero, continue 
+
+
+	
+continue:
+	slt $t6, $a1, $a2 
+	jr $31
 
 testInstructions:
 	addu $s0, $a1, $a2 
@@ -20,18 +35,6 @@ testInstructions:
 	andi $t0, $a2, 15
 	lui $t1, 15
 	bne $zero, $a1, notequals 
-
-continue:
-	slt $t6, $a1, $a2 
-	jr $31
-
-equals:
-	lw $t5, 4($sp)
-	beq $zero, $zero, continue 
-
-notequals:
-	addi $sp, $sp, -4
-	sw $a3, 4($sp)
-	j equals
-
+	
+	
 end:
