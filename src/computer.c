@@ -145,6 +145,7 @@ void Simulate () {
                 mips.pc-=8; // update PC to two instructions back
             } else if(s[0] == 'r'){
                 mips.printingRegisters = 1;
+                /* printf("--val:%d:", val); */
                 mips.pc-=4; // update PC to stay with the current instruction
             } else if(s[0] == 'p'){
                 if(mips.pc == 0x00400000){
@@ -178,6 +179,10 @@ void Simulate () {
 
         printf ("Executing instruction at %8.8x: %8.8x\n", mips.pc, instr);
 
+
+        if(20000000>>29) {
+            printf("EXIT\n");
+        }
         // If no more instructions to fetch get out
         if(instr == 0x0){
             break;
@@ -197,7 +202,9 @@ void Simulate () {
          * Perform computation needed to execute d, 
          * returning computed value in val 
          */
+        /* printf("before execute --val:%d\n:", val); */
         val = Execute(&d, &rVals);
+        /* printf("after execute --val:%d\n:", val); */
 
         UpdatePC(&d,val);
 
@@ -207,7 +214,9 @@ void Simulate () {
          * otherwise put -1 in *changedMem. 
          * Return any memory value that is read, otherwise return -1.
          */
+        /* printf("before Mem--val:%d\n:", val); */
         val = Mem(&d, val, &changedMem);
+        /* printf("after Mem--val:%d\n:", val); */
 
         /* 
          * Write back to register. If the instruction modified a register--
@@ -599,9 +608,11 @@ int Execute ( DecodedInstr* d, RegVals* rVals) {
         case 1: // I-type instructions
 
             // this works, but we need to add
-            if(!strcmp(opName, "addi") || !strcmp(opName, "addiu")){
+            if(!strcmp(opName, "addiu")) {
                 return rVals->R_rs + rVals->R_rd;        
-            } else if(!strcmp(opName, "lui")){
+            } else if(!strcmp(opName, "addi")){
+                return rVals->R_rs + rVals->R_rd;        
+            }else if(!strcmp(opName, "lui")){
                 return rVals->R_rd << 16;        
             } else if(!strcmp(opName, "ori")){
                 return rVals->R_rs | rVals->R_rd;        
@@ -619,6 +630,11 @@ int Execute ( DecodedInstr* d, RegVals* rVals) {
             break;
         case 2: // J-type instructions --might need some work
             if(!strcmp(opName, "jal")){
+                /**
+                 * Saving the register here because otherwise 
+                 * it will mess up with the UpdatePC function
+                 */
+                mips.registers[31] = mips.pc+4;
                 return d->regs.j.target << 2;
             } else {// j instruction
                 return (mips.pc & MASK_UPPER) | (d->regs.j.target << 2);
@@ -745,7 +761,6 @@ void RegWrite( DecodedInstr* d, int val, int *changedReg) {
 
         case 2: // J-type instructions
             if(!strcmp(opName, "jal")) {
-                mips.registers[31] = mips.pc;
                 *changedReg = 31;
             }else {
                 *changedReg = -1;
