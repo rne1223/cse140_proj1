@@ -27,26 +27,26 @@ Computer mips;
 RegVals rVals;
 
 /** 
-  * Trying to make interactive mode user friendly 
-  * Why you may ask?  "\_(ʘ_ʘ)_/" I DON'T KNOW...it helps calm down the nervers I guess
-  *
-  * Thank you for reading this pointless comment...it really means alot to me. 
-  * No very professional I know, but fun :)
-  *
-  * A few hours laters....Okay I need to stop adding arguments to this thing
-  * 
-  * A few hours laters....maybe I should make it autocomplete lol
-  *
-*/
+ * Trying to make interactive mode user friendly 
+ * Why you may ask?  "\_(ʘ_ʘ)_/" I DON'T KNOW...it helps calm down the nervers I guess
+ *
+ * Thank you for reading this pointless comment...it really means alot to me. 
+ * No very professional I know, but fun :)
+ *
+ * A few hours laters....Okay I need to stop adding arguments to this thing
+ * 
+ * A few hours laters....maybe I should make it autocomplete lol
+ *
+ */
 void helpMessage(){
-    printf("Type 'm' to print memory\n");
-    printf("     'r' to print registers  \n");
-    printf("     'h' to print help\n");
-    printf("     'p' to print info\n");
-    printf("     'v' to print the register and their values\n");
-    printf("     'b' to pop instruction from statcks\n");
-    printf("     'q' to quit\n\n");
-    printf("Press 'Enter' for next instruction\n");
+	printf("Type 'm' to print memory\n");
+	printf("     'r' to print registers  \n");
+	printf("     'h' to print help\n");
+	printf("     'p' to print info\n");
+	printf("     'v' to print the register and their values\n");
+	printf("     'b' to pop instruction from statcks\n");
+	printf("     'q' to quit\n\n");
+	printf("Press 'Enter' for next instruction\n");
 }
 
 /*
@@ -56,176 +56,176 @@ void helpMessage(){
  *  The other arguments govern how the program interacts with the user.
  */
 void InitComputer (FILE* filein, int printingRegisters, int printingMemory,
-        int debugging, int interactive) {
-    int k;
-    unsigned int instr;
+		int debugging, int interactive) {
+	int k;
+	unsigned int instr;
 
-    /* Initialize registers and memory */
+	/* Initialize registers and memory */
 
-    for (k=0; k<32; k++) {
-        mips.registers[k] = 0;
-    }
+	for (k=0; k<32; k++) {
+		mips.registers[k] = 0;
+	}
 
-    /* stack pointer - Initialize to highest address of data segment */
-    mips.registers[29] = 0x00400000 + (MAXNUMINSTRS+MAXNUMDATA)*4;
+	/* stack pointer - Initialize to highest address of data segment */
+	mips.registers[29] = 0x00400000 + (MAXNUMINSTRS+MAXNUMDATA)*4;
 
-    for (k=0; k<MAXNUMINSTRS+MAXNUMDATA; k++) {
-        mips.memory[k] = 0;
-    }
+	for (k=0; k<MAXNUMINSTRS+MAXNUMDATA; k++) {
+		mips.memory[k] = 0;
+	}
 
-    k = 0;
-    while (fread(&instr, 4, 1, filein)) {
-        /*swap to big endian, convert to host byte order. Ignore this.*/
-        mips.memory[k] = ntohl(endianSwap(instr));
-        k++;
-        if (k>MAXNUMINSTRS) {
-            fprintf (stderr, "Program too big.\n");
-            exit (1);
-        }
-    }
+	k = 0;
+	while (fread(&instr, 4, 1, filein)) {
+		/*swap to big endian, convert to host byte order. Ignore this.*/
+		mips.memory[k] = ntohl(endianSwap(instr));
+		k++;
+		if (k>MAXNUMINSTRS) {
+			fprintf (stderr, "Program too big.\n");
+			exit (1);
+		}
+	}
 
-    mips.printingRegisters = printingRegisters;
-    mips.printingMemory = printingMemory;
-    mips.interactive = interactive;
-    mips.debugging = debugging;
+	mips.printingRegisters = printingRegisters;
+	mips.printingMemory = printingMemory;
+	mips.interactive = interactive;
+	mips.debugging = debugging;
 }
 
 unsigned int endianSwap(unsigned int i) {
-    return (i>>24)|(i>>8&0x0000ff00)|(i<<8&0x00ff0000)|(i<<24);
+	return (i>>24)|(i>>8&0x0000ff00)|(i<<8&0x00ff0000)|(i<<24);
 }
 
 /*
  *  Run the simulation.
  */
 void Simulate () {
-    char s[40];  /* used for handling interactive input */
-    unsigned int instr;
+	char s[40];  /* used for handling interactive input */
+	unsigned int instr;
 
-    int changedReg=-1, changedMem=-1, val;
-    DecodedInstr d;
+	int changedReg=-1, changedMem=-1, val;
+	DecodedInstr d;
 
-    /* Initialize the PC to the start of the code section */
-    mips.pc = 0x00400000;
+	/* Initialize the PC to the start of the code section */
+	mips.pc = 0x00400000;
 
-    /** 
-     * tmps use for interactive mode
-     * and easier debugging 
-     */
-    int tmp_prMemory= mips.printingMemory;
-    int tmp_prRegisters = mips.printingRegisters;
+	/** 
+	 * tmps use for interactive mode
+	 * and easier debugging 
+	 */
+	int tmp_prMemory= mips.printingMemory;
+	int tmp_prRegisters = mips.printingRegisters;
 
-    /*** 
-      * We don't want to display the help message 
-      * if interactive mode is off
-      */
-    if (mips.interactive)
-        helpMessage();
+	/*** 
+	 * We don't want to display the help message 
+	 * if interactive mode is off
+	 */
+	if (mips.interactive)
+		helpMessage();
 
-    while (1) {
-        /**
-         * "Look at it professor...look at my interactive mode"
-         *                      - by a desperate student  extra credit
-         */
-        if (mips.interactive) {
-            printf ("> ");
-            fgets (s,sizeof(s),stdin);
+	while (1) {
+		/**
+		 * "Look at it professor...look at my interactive mode"
+		 *                      - by a desperate student  extra credit
+		 */
+		if (mips.interactive) {
+			printf ("> ");
+			fgets (s,sizeof(s),stdin);
 
-            if (s[0] == 'q') {
-                printf("BYE BYE\n");
-                return; // bye bye interactive mode...it was fun while it lasted :(
-            } else if(s[0] == 'm'){
-                mips.printingMemory = 1;
-                mips.pc-=4; // update PC to stay with the current instruction
-            } else if(s[0] == 'b'){
-                if(mips.pc < 0x00400008){
-                    printf("Not enough instructions to pop\n");
-                    continue;
-                }
-                printf("Poping an instruction\n");
-                mips.pc-=8; // update PC to two instructions back
-            } else if(s[0] == 'r'){
-                mips.printingRegisters = 1;
-                mips.pc-=4; // update PC to stay with the current instruction
-            } else if(s[0] == 'p'){
-                if(mips.pc == 0x00400000){
-                    printf("No instructions have been executed\n");
-                    continue;
-                }
-                printf ("Previous Executed instruction at %8.8x: %8.8x\n", mips.pc, instr);
-                PrintInstruction(&d);
-                PrintInfo (changedReg, changedMem); 
-                continue;
+			if (s[0] == 'q') {
+				printf("BYE BYE\n");
+				return; // bye bye interactive mode...it was fun while it lasted :(
+			} else if(s[0] == 'm'){
+				mips.printingMemory = 1;
+				mips.pc-=4; // update PC to stay with the current instruction
+			} else if(s[0] == 'b'){
+				if(mips.pc < 0x00400008){
+					printf("Not enough instructions to pop\n");
+					continue;
+				}
+				printf("Poping an instruction\n");
+				mips.pc-=8; // update PC to two instructions back
+			} else if(s[0] == 'r'){
+				mips.printingRegisters = 1;
+				mips.pc-=4; // update PC to stay with the current instruction
+			} else if(s[0] == 'p'){
+				if(mips.pc == 0x00400000){
+					printf("No instructions have been executed\n");
+					continue;
+				}
+				printf ("Previous Executed instruction at %8.8x: %8.8x\n", mips.pc, instr);
+				PrintInstruction(&d);
+				PrintInfo (changedReg, changedMem); 
+				continue;
 
-            } else if(s[0] == 'v'){ 
+			} else if(s[0] == 'v'){ 
 
-                printf("rs:$%d=%d\n",d.regs.r.rs, rVals.R_rs);
-                printf("rt:$%d=%d\n",d.regs.r.rt, rVals.R_rt);
+				printf("rs:$%d=%d\n",d.regs.r.rs, rVals.R_rs);
+				printf("rt:$%d=%d\n",d.regs.r.rt, rVals.R_rt);
 
-                if(d.type == 2) // print address instead
-                    printf("address:%#010x\n", rVals.R_rd);
-                else
-                    printf("rd:$%d=%d\n",d.regs.r.rd, rVals.R_rd);
+				if(d.type == 2) // print address instead
+					printf("address:%#010x\n", rVals.R_rd);
+				else
+					printf("rd:$%d=%d\n",d.regs.r.rd, rVals.R_rd);
 
-                printf("Val=%d\n", val);
-                continue;
-            } else if(s[0] == 'h'){ 
-                helpMessage();
-                continue;
-            }                      
-        }
-        /* Fetch instr at mips.pc, returning it in instr */
-        instr = Fetch (mips.pc);                                                                               
+				printf("Val=%d\n", val);
+				continue;
+			} else if(s[0] == 'h'){ 
+				helpMessage();
+				continue;
+			}                      
+		}
+		/* Fetch instr at mips.pc, returning it in instr */
+		instr = Fetch (mips.pc);                                                                               
 
-        printf ("Executing instruction at %8.8x: %8.8x\n", mips.pc, instr);
+		printf ("Executing instruction at %8.8x: %8.8x\n", mips.pc, instr);
 
-        // If no more instructions to fetch get out
-        if(instr == 0x0){
-            break;
-        }
+		// If no more instructions to fetch get out
+		if(instr == 0x0){
+			break;
+		}
 
 
-        /* 
-         * Decode instr, putting decoded instr in d
-         * Note that we reuse the d struct for each instruction.
-         */
-        Decode (instr, &d, &rVals);
+		/* 
+		 * Decode instr, putting decoded instr in d
+		 * Note that we reuse the d struct for each instruction.
+		 */
+		Decode (instr, &d, &rVals);
 
-        /*Print decoded instruction*/
-        PrintInstruction(&d);
+		/*Print decoded instruction*/
+		PrintInstruction(&d);
 
-        /* 
-         * Perform computation needed to execute d, 
-         * returning computed value in val 
-         */
-        val = Execute(&d, &rVals);
+		/* 
+		 * Perform computation needed to execute d, 
+		 * returning computed value in val 
+		 */
+		val = Execute(&d, &rVals);
 
-        UpdatePC(&d,val);
+		UpdatePC(&d,val);
 
-        /* 
-         * Perform memory load or store. Place the
-         * address of any updated memory in *changedMem, 
-         * otherwise put -1 in *changedMem. 
-         * Return any memory value that is read, otherwise return -1.
-         */
-        val = Mem(&d, val, &changedMem);
+		/* 
+		 * Perform memory load or store. Place the
+		 * address of any updated memory in *changedMem, 
+		 * otherwise put -1 in *changedMem. 
+		 * Return any memory value that is read, otherwise return -1.
+		 */
+		val = Mem(&d, val, &changedMem);
 
-        /* 
-         * Write back to register. If the instruction modified a register--
-         * (including jal, which modifies $ra) --
-         * put the index of the modified register in *changedReg,
-         * otherwise put -1 in *changedReg.
-         */
-        RegWrite(&d, val, &changedReg);
+		/* 
+		 * Write back to register. If the instruction modified a register--
+		 * (including jal, which modifies $ra) --
+		 * put the index of the modified register in *changedReg,
+		 * otherwise put -1 in *changedReg.
+		 */
+		RegWrite(&d, val, &changedReg);
 
-        PrintInfo (changedReg, changedMem);
-        printf("\n"); // printing new line to separate the instructions
+		PrintInfo (changedReg, changedMem);
+		printf("\n"); // printing new line to separate the instructions
 
-        // For Debugging Purposes :p
-        mips.printingMemory = tmp_prMemory;
-        mips.printingRegisters = tmp_prRegisters;
-    }
+		// For Debugging Purposes :p
+		mips.printingMemory = tmp_prMemory;
+		mips.printingRegisters = tmp_prRegisters;
+	}
 
-    printf("PROGRAM DONE!!!!\n");
+	printf("PROGRAM DONE!!!!\n");
 }
 
 /*
@@ -239,38 +239,38 @@ void Simulate () {
  *  all the nonzero memory or just the memory location that changed.
  */
 void PrintInfo ( int changedReg, int changedMem) {
-    printf ("New pc = %8.8x\n", mips.pc);
+	printf ("New pc = %8.8x\n", mips.pc);
 
-    int k, addr;
-    if (!mips.printingRegisters && changedReg == -1) {
-        printf ("No register was updated.\n");
-    } else if (!mips.printingRegisters) {
-        printf ("Updated r%2.2d to %8.8x\n",
-                changedReg, mips.registers[changedReg]);
-    } else {
-        for (k=0; k<32; k++) {
-            printf ("r%2.2d: %8.8x  ", k, mips.registers[k]);
-            if ((k+1)%4 == 0) {
-                printf ("\n");
-            }
-        }
-    }
-    if (!mips.printingMemory && changedMem == -1) {
-        printf ("No memory location was updated.\n");
-    } else if (!mips.printingMemory) {
-        printf ("Updated memory at address %8.8x to %8.8x\n",
-                changedMem, Fetch (changedMem));
-    } else {
-        printf ("Nonzero memory\n");
-        printf ("ADDR	  CONTENTS\n");
-        for (addr = 0x00400000+4*MAXNUMINSTRS;
-                addr < 0x00400000+4*(MAXNUMINSTRS+MAXNUMDATA);
-                addr = addr+4) {
-            if (Fetch (addr) != 0) {
-                printf ("%8.8x  %8.8x\n", addr, Fetch (addr));
-            }
-        }
-    }
+	int k, addr;
+	if (!mips.printingRegisters && changedReg == -1) {
+		printf ("No register was updated.\n");
+	} else if (!mips.printingRegisters) {
+		printf ("Updated r%2.2d to %8.8x\n",
+				changedReg, mips.registers[changedReg]);
+	} else {
+		for (k=0; k<32; k++) {
+			printf ("r%2.2d: %8.8x  ", k, mips.registers[k]);
+			if ((k+1)%4 == 0) {
+				printf ("\n");
+			}
+		}
+	}
+	if (!mips.printingMemory && changedMem == -1) {
+		printf ("No memory location was updated.\n");
+	} else if (!mips.printingMemory) {
+		printf ("Updated memory at address %8.8x to %8.8x\n",
+				changedMem, Fetch (changedMem));
+	} else {
+		printf ("Nonzero memory\n");
+		printf ("ADDR	  CONTENTS\n");
+		for (addr = 0x00400000+4*MAXNUMINSTRS;
+				addr < 0x00400000+4*(MAXNUMINSTRS+MAXNUMDATA);
+				addr = addr+4) {
+			if (Fetch (addr) != 0) {
+				printf ("%8.8x  %8.8x\n", addr, Fetch (addr));
+			}
+		}
+	}
 }
 
 /*
@@ -278,193 +278,193 @@ void PrintInfo ( int changedReg, int changedMem) {
  *  instruction fetch. 
  */
 unsigned int Fetch ( int addr) {
-    return mips.memory[(addr-0x00400000)/4];
+	return mips.memory[(addr-0x00400000)/4];
 }
 
 // Get the op name 
 void getOpName(char * funct_name, DecodedInstr* d){
 
-    int funct = 0;
-    int op = 0;
+	int funct = 0;
+	int op = 0;
 
-    switch (d->type) {
+	switch (d->type) {
 
-        case 0: // R-format functions
+		case 0: // R-format functions
 
-            funct = d->regs.r.funct; // get the fucnt from d , less typing
+			funct = d->regs.r.funct; // get the fucnt from d , less typing
 
-            switch (funct) {
+			switch (funct) {
 
-                case 0:
-                    strcpy(funct_name,"sll");
-                    break;
-                case 2:
-                    strcpy(funct_name,"srl");
-                    break;
-                case 8:
-                    strcpy(funct_name,"jr");
-                    break;
-                case 32:
-                    strcpy(funct_name,"add");
-                    break;
-                case 33:
-                    strcpy(funct_name,"addu");
-                    break;
-                case 34:
-                    strcpy(funct_name,"sub");
-                    break;
-                case 35:
-                    strcpy(funct_name,"subu");
-                    break;
-                case 36:
-                    strcpy(funct_name,"and");
-                    break;
-                case 37:
-                    strcpy(funct_name,"or");
-                    break;
-                case 39:
-                    strcpy(funct_name,"nor");
-                    break;
-                case 42:
-                    strcpy(funct_name,"slt");
-                    break;
-                case 43:
-                    strcpy(funct_name,"sltu");
-                    break;
-            }
-            break;
+				case 0:
+					strcpy(funct_name,"sll");
+					break;
+				case 2:
+					strcpy(funct_name,"srl");
+					break;
+				case 8:
+					strcpy(funct_name,"jr");
+					break;
+				case 32:
+					strcpy(funct_name,"add");
+					break;
+				case 33:
+					strcpy(funct_name,"addu");
+					break;
+				case 34:
+					strcpy(funct_name,"sub");
+					break;
+				case 35:
+					strcpy(funct_name,"subu");
+					break;
+				case 36:
+					strcpy(funct_name,"and");
+					break;
+				case 37:
+					strcpy(funct_name,"or");
+					break;
+				case 39:
+					strcpy(funct_name,"nor");
+					break;
+				case 42:
+					strcpy(funct_name,"slt");
+					break;
+				case 43:
+					strcpy(funct_name,"sltu");
+					break;
+			}
+			break;
 
-        case 1: // I-Format functions
+		case 1: // I-Format functions
 
-            op = d->op;
+			op = d->op;
 
-            switch (op) {
-                case 4:
-                    strcpy(funct_name,"beq");
-                    break;
-                case 5:
-                    strcpy(funct_name,"bne");
-                    break;
-                case 8:
-                    strcpy(funct_name,"addi");
-                    break;
-                case 9:
-                    strcpy(funct_name,"addiu");
-                    break;
-                case 10:
-                    strcpy(funct_name,"slti");
-                    break;
-                case 11:
-                    strcpy(funct_name,"sltiu");
-                    break;
-                case 12:
-                    strcpy(funct_name,"andi");
-                    break;
-                case 13:
-                    strcpy(funct_name,"ori");
-                    break;
-                case 15:
-                    strcpy(funct_name,"lui");
-                    break;
-                case 35:
-                    strcpy(funct_name,"lw");
-                    break;
-                case 43:
-                    strcpy(funct_name,"sw");
-                    break;
-            }
+			switch (op) {
+				case 4:
+					strcpy(funct_name,"beq");
+					break;
+				case 5:
+					strcpy(funct_name,"bne");
+					break;
+				case 8:
+					strcpy(funct_name,"addi");
+					break;
+				case 9:
+					strcpy(funct_name,"addiu");
+					break;
+				case 10:
+					strcpy(funct_name,"slti");
+					break;
+				case 11:
+					strcpy(funct_name,"sltiu");
+					break;
+				case 12:
+					strcpy(funct_name,"andi");
+					break;
+				case 13:
+					strcpy(funct_name,"ori");
+					break;
+				case 15:
+					strcpy(funct_name,"lui");
+					break;
+				case 35:
+					strcpy(funct_name,"lw");
+					break;
+				case 43:
+					strcpy(funct_name,"sw");
+					break;
+			}
 
-        case 2: // J-format functions
-            op = d->op;
+		case 2: // J-format functions
+			op = d->op;
 
-            switch (op) {
-                case 2:
-                    strcpy(funct_name,"j");
-                    break;
-                case 3:
-                    strcpy(funct_name,"jal");
-                    break;
-            }
-            break;
+			switch (op) {
+				case 2:
+					strcpy(funct_name,"j");
+					break;
+				case 3:
+					strcpy(funct_name,"jal");
+					break;
+			}
+			break;
 
-    }
+	}
 }
 
 /* Decode instr, returning decoded instruction. */
 void Decode ( unsigned int instr, DecodedInstr* d, RegVals* rVals) {
 
-    int inst_op = instr>>26;  // get the first 6bits
-    d->op = inst_op;
+	int inst_op = instr>>26;  // get the first 6bits
+	d->op = inst_op;
 
-    char opName[6] = " ";
-    getOpName(opName, d);
+	char opName[6] = " ";
+	getOpName(opName, d);
 
-    /** Retrive Regiters **/
-    //If op is 0 then R-format
-    if(inst_op == 0) {
+	/** Retrive Regiters **/
+	//If op is 0 then R-format
+	if(inst_op == 0) {
 
-        // declare the instruction to be R-format
-        d->type = 0; 
+		// declare the instruction to be R-format
+		d->type = 0; 
 
-        // Get R-format registers
-        RRegs rregs;
-        // shifting and masking to get certain values from the instruction
-        rregs.rs    = (instr >> 21) & MASK_5;
-        rregs.rt    = (instr >> 16) & MASK_5;
-        rregs.rd    = (instr >> 11) & MASK_5;
-        rregs.shamt = (instr >> 6) & MASK_5;
-        rregs.funct = instr & MASK_6;
+		// Get R-format registers
+		RRegs rregs;
+		// shifting and masking to get certain values from the instruction
+		rregs.rs    = (instr >> 21) & MASK_5;
+		rregs.rt    = (instr >> 16) & MASK_5;
+		rregs.rd    = (instr >> 11) & MASK_5;
+		rregs.shamt = (instr >> 6) & MASK_5;
+		rregs.funct = instr & MASK_6;
 
-        // Get the register values
-        rVals->R_rs = mips.registers[rregs.rs];
-        rVals->R_rt = mips.registers[rregs.rt];
-        rVals->R_rd = mips.registers[rregs.rd];
+		// Get the register values
+		rVals->R_rs = mips.registers[rregs.rs];
+		rVals->R_rt = mips.registers[rregs.rt];
+		rVals->R_rd = mips.registers[rregs.rd];
 
-        // put values in d
-        d->regs.r = rregs;
+		// put values in d
+		d->regs.r = rregs;
 
-        //Else if op is 2 or 3 then J format  
-    }else if(inst_op == 2 || inst_op == 3 ) {
+		//Else if op is 2 or 3 then J format  
+	}else if(inst_op == 2 || inst_op == 3 ) {
 
-        // declare the instruction to be J-format
-        d->type = 2; 
+		// declare the instruction to be J-format
+		d->type = 2; 
 
-        //get addr
-        JRegs jregs;
-        jregs.target = instr & MASK_26;
+		//get addr
+		JRegs jregs;
+		jregs.target = instr & MASK_26;
 
-        // nothing to put here
-        rVals->R_rs = -1;
-        rVals->R_rt = -1;
-        rVals->R_rd = jregs.target;
+		// nothing to put here
+		rVals->R_rs = -1;
+		rVals->R_rt = -1;
+		rVals->R_rd = jregs.target;
 
-        d->regs.j = jregs;
+		d->regs.j = jregs;
 
-    //Else is I format
-    } else {
+		//Else is I format
+	} else {
 
-        // declare the instruction to be I-format
-        d->type = 1;
+		// declare the instruction to be I-format
+		d->type = 1;
 
-        // Get I-format registers and immed
-        IRegs iregs;
-        iregs.rs = (instr >> 21) & MASK_5;
-        iregs.rt = (instr >> 16) & MASK_5;
-        iregs.addr_or_immed = instr & MASK_16;
+		// Get I-format registers and immed
+		IRegs iregs;
+		iregs.rs = (instr >> 21) & MASK_5;
+		iregs.rt = (instr >> 16) & MASK_5;
+		iregs.addr_or_immed = instr & MASK_16;
 
-        // get the register values
-        rVals->R_rs = mips.registers[iregs.rs];
-        rVals->R_rt = mips.registers[iregs.rt];
+		// get the register values
+		rVals->R_rs = mips.registers[iregs.rs];
+		rVals->R_rt = mips.registers[iregs.rt];
 
-        if(iregs.addr_or_immed >> 15) { 
-            // If it is negative then fill the upper 16 bits with 1
-            iregs.addr_or_immed |= MASK_UPPER; 
-        }      
+		if(iregs.addr_or_immed >> 15) { 
+			// If it is negative then fill the upper 16 bits with 1
+			iregs.addr_or_immed |= MASK_UPPER; 
+		}      
 
-        rVals->R_rd = iregs.addr_or_immed;
-        // put values in d
-        d->regs.i = iregs;
-    }
+		rVals->R_rd = iregs.addr_or_immed;
+		// put values in d
+		d->regs.i = iregs;
+	}
 }
 
 
@@ -474,160 +474,179 @@ void Decode ( unsigned int instr, DecodedInstr* d, RegVals* rVals) {
  */
 void PrintInstruction ( DecodedInstr* d) {
 
-    char opName[6] = " ";
-    getOpName(opName, d);
+	char opName[6] = " ";
+	getOpName(opName, d);
 
-    // print the the type of operation
-    printf("%s ", opName);
+	// print the the type of operation
+	printf("%s ", opName);
 
-    switch (d->type) {
+	switch (d->type) {
 
-        case 0: // Print R-format instructions
-            if(!strcmp(opName, "jr")){ // if jr then only print two values
-                printf(" %#010x\n", d->regs.r.rs);
-            }else{
-                printf(" $%d, $%d, $%d\n", d->regs.r.rd,d->regs.r.rs,d->regs.r.rt);
-            }
-            break;
-        case 1: // Print I-format instructions
-            if(!strcmp(opName, "lui")) {
+		case 0: // Print R-format instructions
+			if(!strcmp(opName, "jr")){ // if jr then only print two values
+				printf(" %#010x\n", d->regs.r.rs);
+			}else{
+				printf(" $%d, $%d, $%d\n", d->regs.r.rd,d->regs.r.rs,d->regs.r.rt);
+			}
+			break;
+		case 1: // Print I-format instructions
+			if(!strcmp(opName, "lui")) {
 
-                printf(" $%d, %#010x\n", d->regs.i.rt,d->regs.i.addr_or_immed);
+				printf(" $%d, %#010x\n", d->regs.i.rt,d->regs.i.addr_or_immed);
 
-            } else if(!strcmp(opName, "lw") || !strcmp(opName, "sw")){
-                // printing 0x0000003($s1)
-                printf(" $%d, %#010x($%d)\n", d->regs.i.rt,d->regs.i.addr_or_immed, d->regs.i.rs);
+			} else if(!strcmp(opName, "lw") || !strcmp(opName, "sw")){
+				// printing 0x0000003($s1)
+				printf(" $%d, %#010x($%d)\n", d->regs.i.rt,d->regs.i.addr_or_immed, d->regs.i.rs);
 
-            } else {
-                // printing $s0, $s1, 0x00000003
-                printf(" $%d, $%d, %#010x\n", d->regs.i.rt,d->regs.i.rs,d->regs.i.addr_or_immed);
-            }
-            break;
-        case 2: // Print J-format instructions
-            printf("%#010x\n", d->regs.j.target); 
-            break;
+			} else {
+				// printing $s0, $s1, 0x00000003
+				printf(" $%d, $%d, %#010x\n", d->regs.i.rt,d->regs.i.rs,d->regs.i.addr_or_immed);
+			}
+			break;
+		case 2: // Print J-format instructions
+			printf("%#010x\n", d->regs.j.target); 
+			break;
 
-    }
+	}
 }
 
 /* Perform computation needed to execute d, returning computed value */
 int Execute ( DecodedInstr* d, RegVals* rVals) {
 
-    /**********
-      * TODO:
-      ********* 
-      * Whatever is done mark it as done
-      ***
+	/**********
+	 * TODO:
+	 ********* 
+	 * Whatever is done mark it as done
+	 ***
 
-      R-format instructions to implement
-      --------------------------------
-      * addu Rdest, Rsrc1, Rsrc2    - done
-      * subu Rdest, Rsrc1, Rsrc2    - done **Mars turns "Subu" into "lui" "ori" and then subu :/
-      * and  Rdest, Rsrc1, Rsrc2    - done
-      * or   Rdest, Rsrc1, Rsrc2    - done
-      * slt  Rdest, Rsrc1, Rsrc2    - done
-      * sll  Rdest, Rsrc, shamt     - done
-      * srl  Rdest, Rsrc, shamt     - done
+	 R-format instructions to implement
+	 --------------------------------
+	 * addu Rdest, Rsrc1, Rsrc2    - done
+	 * subu Rdest, Rsrc1, Rsrc2    - done **Mars turns "Subu" into "lui" "ori" and then subu :/
+	 * and  Rdest, Rsrc1, Rsrc2    - done
+	 * or   Rdest, Rsrc1, Rsrc2    - done
+	 * slt  Rdest, Rsrc1, Rsrc2    - done
+	 * sll  Rdest, Rsrc, shamt     - done
+	 * srl  Rdest, Rsrc, shamt     - done
 
-      I-format instructions to implement
-      --------------------------    
-      * ori   Rdest, Rsrc, imm      - done
-      * andi  Rdest, Rsrc, imm      - done
-      * addiu Rdest, Rsrc1, imm     - done
-      * lui   Rdest, imm            - done
-      * beq   Rsrc1, Rsrc2, raddr   - done
-      * bne   Rsrc1, Rsrc2, raddr   - done
-      * lw    Rdest, offset (Radd)
-      * sw    Rdest, offset (Radd) 
+	 I-format instructions to implement
+	 --------------------------    
+	 * ori   Rdest, Rsrc, imm      - done
+	 * andi  Rdest, Rsrc, imm      - done
+	 * addiu Rdest, Rsrc1, imm     - done
+	 * lui   Rdest, imm            - done
+	 * beq   Rsrc1, Rsrc2, raddr   - done
+	 * bne   Rsrc1, Rsrc2, raddr   - done
+	 * lw    Rdest, offset (Radd)
+	 * sw    Rdest, offset (Radd) 
 
 
-      J-format instructions to implement
-      --------------------------
-      * j   address
-      * jal address                 - done
-      * jr  Rsrc
-      */
+	 J-format instructions to implement
+	 --------------------------
+	 * j   address
+	 * jal address                 - done
+	 * jr  Rsrc
+	 */
 
-    char opName[6] = " ";
-    getOpName(opName, d);
+	char opName[6] = " ";
+	getOpName(opName, d);
+	/* addu, addiu, subu, sll, srl, and, andi, or, ori, lui, slt,
+	 * beq, bne, jal, jr, lw, sw */
+	//d has all register number, rVals should hold numerical value
 
-    // R-format
-    switch (d->type) {
+	int rd = 0; //return value sent to register
+	switch(d->type){
+		//Need to get type to know how to get registers & their values
+		case 0:
+			switch(d->regs.r.funct){
+				case 0: //sll rd, rs, shampt (rd = rt<<shampt)
+					rd = (rVals->R_rs)<<(d->regs.r.shamt);
+					return rd;
+					break;
+				case 2: //srl rd, rs, shampt (rd = rt>>shampt)
+					rd = (rVals->R_rs)>>(d->regs.r.shamt);
+					return rd;
+					break;
+				case 8: //jr rs (PC = JumpAddr)
+					mips.pc = d->regs.j.target;
+					return mips.pc;
+					break;
+				case 33://addu rd, rs, rt (rd = rs + rt)
+					rd = (rVals->R_rs) + (rVals->R_rt);
+					return rd;
+					break;
+				case 35://subu rd, rs, rt (rd = rs - rt)
+					rd = (rVals->R_rs) -(rVals->R_rt);
+					return rd;
+					break;
+				case 36://and rd, rs, rt (rd = rs & rt)
+					rd = (rVals->R_rs) & (rVals->R_rt);
+					return rd;
+					break;
+				case 37://or rd, rs, rt (rd = rs | rt)
+					rd = (rVals->R_rs) | (rVals->R_rt);
+					return rd;
+					break;
+				case 42://slt rd, rs, rt (rd = rs < rt)
+					if(rVals->R_rs < rVals->R_rt)
+						return 1;
+					else
+						return 0;
+					break;
+			}
+			break;
+		case 1:
+			switch(d->op){
+				case 4: //beq rs, rt, raddr (if rs == rt --> PC+4+addr)
+					if(rVals->R_rt == rVals->R_rs)
+						return (d->regs.i.addr_or_immed<<2);
+					/* return mips.pc; */
+					break;
+				case 5://bne rs, rt, raddr (if rs != rt --> PC+4+addr)
+					if(rVals->R_rt != rVals->R_rs)
+					    return (d->regs.i.addr_or_immed<<2);
+					break;
+				case 9://addiu rt, rs, imm (rt = rs + imm)
+					//Note: names are wrong rs holds the first given reg,
+					//and rt holds the second given reg
+					rd = (rVals->R_rt + d->regs.i.addr_or_immed);
+					return rd;      
+					break;
+				case 12://andi rd, rs, imm (rt = rs & zeroExtImm)
+					rd = (rVals->R_rt) & (d->regs.i.addr_or_immed);
+					return rd;
+					break;
+				case 13://ori (rt = rs | zeroExtImm)
+					rd = (rVals->R_rt) | (d->regs.i.addr_or_immed);
+					return rd;
+					break;
+				case 15://lui rd, imm (rt = imm<<16)
+					rd = (d->regs.i.addr_or_immed)<<16;
+					return rd;
+					break;
+				case 35://lw rt, imm(rs) (rt = MEM[rs+imm])
+					rd = (rVals->R_rt + d->regs.i.addr_or_immed);
+					return rd;
+					break;
+				case 43://sw rt, imm(rs) (rt = MEM[rs+imm])
+					rd = (rVals->R_rt + d->regs.i.addr_or_immed);
+					return rd;
+					break;
+			}
+			break;
+		case 2:
+			switch(d->op){
+				case 2://j (pc += target << 2)
+					return (d->regs.j.target<<2);
+					break;
+				case 3://jal (r31 = pc, pc += target <<2)
+					mips.registers[31] = mips.pc;
+					return (d->regs.j.target<<2);
+					break;
+			}
+	}
 
-        case 0: // R-format instructions
-
-            // Most of the code below is wrong...we need to fix :/
-            if(!strcmp(opName, "addu") || !strcmp(opName, "add")) {
-
-                return rVals->R_rs + rVals->R_rt;        
-
-            } else if(!strcmp(opName, "subu") || !strcmp(opName, "sub")) {
-
-                return rVals->R_rs - rVals->R_rt;        
-
-            } else if(!strcmp(opName, "sltu") || !strcmp(opName, "slt") ) {
-
-                return rVals->R_rs < rVals->R_rt;        
-
-            } else if(!strcmp(opName, "and")) {
-
-                return rVals->R_rs & rVals->R_rt;        
-                
-            } else if(!strcmp(opName, "or")) {
-
-                return rVals->R_rs | rVals->R_rt;        
-
-            } else if(!strcmp(opName, "nor")) {
-                
-                return ~(rVals->R_rs | rVals->R_rt);        
-
-            } else if(!strcmp(opName, "sll")) {
-
-                return rVals->R_rt << d->regs.r.shamt;        
-
-            } else if(!strcmp(opName, "srl")) {
-
-                return rVals->R_rt >> d->regs.r.shamt;        
-
-            } else if(!strcmp(opName, "jr")) {
-
-                return rVals->R_rs;        
-            }         
-
-            break;
-
-        case 1: // I-type instructions
-
-            // this works, but we need to add
-            if(!strcmp(opName, "addi") || !strcmp(opName, "addiu")){
-                return rVals->R_rs + rVals->R_rd;        
-            } else if(!strcmp(opName, "lui")){
-                return rVals->R_rd << 16;        
-            } else if(!strcmp(opName, "ori")){
-                return rVals->R_rs | rVals->R_rd;        
-            } else if(!strcmp(opName, "andi")){
-                return rVals->R_rs & rVals->R_rd;        
-            } else if(!strcmp(opName, "bne")){
-                if(rVals->R_rs != rVals->R_rt){
-                    return rVals->R_rd * 4; 
-                }
-            } else if(!strcmp(opName, "beq")){
-                if(rVals->R_rs == rVals->R_rt){
-                    return rVals->R_rd * 4; 
-                } 
-            } 
-            break;
-        case 2: // J-type instructions --might need some work
-            if(!strcmp(opName, "jal")){
-                return d->regs.j.target << 2;
-            } else {// j instruction
-                return (mips.pc & MASK_UPPER) | (d->regs.j.target << 2);
-            } 
-            
-            break;
-    }
-
-    return 0;
+	return 0;
 }
 
 /* 
@@ -636,36 +655,36 @@ int Execute ( DecodedInstr* d, RegVals* rVals) {
  * increments by 4 (which we have provided).
  */
 void UpdatePC ( DecodedInstr* d, int val) {
-    mips.pc+=4;
+	mips.pc+=4;
 
-    char opName[6] = " ";
-    getOpName(opName, d);
+	char opName[6] = " ";
+	getOpName(opName, d);
 
-    switch (d->type) {
+	switch (d->type) {
 
-        case 0: // R-format instructions
-            // Only worry about jr
-            if(!strcmp(opName, "jr")){
-                /* printf("---val address:%#010x\n", val); */
-                mips.pc = val;
-                /* mips.pc = mips.registers[val];  */
-            }
-            break;
+		case 0: // R-format instructions
+			// Only worry about jr
+			if(!strcmp(opName, "jr")){
+				/* printf("---val address:%#010x\n", val); */
+				mips.pc = val;
+				/* mips.pc = mips.registers[val];  */
+			}
+			break;
 
-        case 1: // I-type instructions
+		case 1: // I-type instructions
 
-            // There are a few I-format instructions that mess with the PC
-            if(!strcmp(opName, "beq") || !strcmp(opName, "bne" )) {
-                mips.pc += val;
-            } 
-            break;
+			// There are a few I-format instructions that mess with the PC
+			if(!strcmp(opName, "beq") || !strcmp(opName, "bne" )) {
+				mips.pc += val;
+			} 
+			break;
 
-        case 2: // J-type instructions
+		case 2: // J-type instructions
 
-            mips.pc = val;
-            break;
+			mips.pc = val;
+			break;
 
-    }
+	}
 }
 
 /*
@@ -679,40 +698,40 @@ void UpdatePC ( DecodedInstr* d, int val) {
  *
  */
 int Mem( DecodedInstr* d, int val, int *changedMem) {
-    
-    char opName[6] = " ";       
-    getOpName(opName, d);
 
-    // R-format
-    switch (d->type) {
+	char opName[6] = " ";       
+	getOpName(opName, d);
 
-        case 0: // R-format instructions don't use memory
-            return val;
-            *changedMem = -1;
-            break;
+	// R-format
+	switch (d->type) {
 
-        case 1: // Few I-type instructions that use memory
-            if (!strcmp(opName, "lw" )) {
+		case 0: // R-format instructions don't use memory
+			return val;
+			*changedMem = -1;
+			break;
 
-                /* printf("pc changed lw"); */
+		case 1: // Few I-type instructions that use memory
+			if (!strcmp(opName, "lw" )) {
 
-            } else if (!strcmp(opName, "sw" )) {
+				/* printf("pc changed lw"); */
 
-                /* printf("pc changed sw"); */
+			} else if (!strcmp(opName, "sw" )) {
 
-            } else {
-                *changedMem = -1;
-                return val;
-            }
-           
-            break;
+				/* printf("pc changed sw"); */
 
-        case 2: // J-type instructions
-            *changedMem = -1;
-            break;
+			} else {
+				*changedMem = -1;
+				return val;
+			}
 
-    }
-    return 0;
+			break;
+
+		case 2: // J-type instructions
+			*changedMem = -1;
+			break;
+
+	}
+	return 0;
 }
 
 /* 
@@ -722,36 +741,36 @@ int Mem( DecodedInstr* d, int val, int *changedMem) {
  * otherwise put -1 in *changedReg.
  */
 void RegWrite( DecodedInstr* d, int val, int *changedReg) {
-    char opName[6] = " ";
-    getOpName(opName, d);
+	char opName[6] = " ";
+	getOpName(opName, d);
 
-    // R-format
-    switch (d->type) {
+	// R-format
+	switch (d->type) {
 
-        case 0: // R-format instructions
-            mips.registers[d->regs.r.rd] = val;
-            *changedReg = d->regs.r.rd;
-            break;
+		case 0: // R-format instructions
+			mips.registers[d->regs.r.rd] = val;
+			*changedReg = d->regs.r.rd;
+			break;
 
-        case 1: // I-type instructions
-            if(!strcmp(opName, "bne") || !strcmp(opName, "beq") ) {  
-                *changedReg = -1;
-            }else{
+		case 1: // I-type instructions
+			if(!strcmp(opName, "bne") || !strcmp(opName, "beq") ) {  
+				*changedReg = -1;
+			}else{
 
-                mips.registers[d->regs.i.rt] = val;
-                *changedReg = d->regs.i.rt;
-            }
-            break;
+				mips.registers[d->regs.i.rt] = val;
+				*changedReg = d->regs.i.rt;
+			}
+			break;
 
-        case 2: // J-type instructions
-            if(!strcmp(opName, "jal")) {
-                mips.registers[31] = mips.pc;
-                *changedReg = 31;
-            }else {
-                *changedReg = -1;
-            }
+		case 2: // J-type instructions
+			if(!strcmp(opName, "jal")) {
+				mips.registers[31] = mips.pc;
+				*changedReg = 31;
+			}else {
+				*changedReg = -1;
+			}
 
-            break;
+			break;
 
-    }
+	}
 }
