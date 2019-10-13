@@ -588,7 +588,6 @@ int Execute ( DecodedInstr* d, RegVals* rVals) {
 
     char opName[6] = " ";
     getOpName(opName, d);
-    int addr, result;
 
     // R-format
     switch (d->type) {
@@ -660,17 +659,13 @@ int Execute ( DecodedInstr* d, RegVals* rVals) {
 
             } else if(!strcmp(opName, "lw")) { // load word
 
-                /* printf("Rs:%#010x + Immd:%#010x = %#010x \n",rVals->R_rs, rVals->R_rd, addr); */
                 // return address = offset + immed
                 return rVals->R_rs + rVals->R_rd;        
 
-            } else if(!strcmp(opName, "sw")){ // load word
+            } else if(!strcmp(opName, "sw")){ // store word
 
                 // return address = offset + immed
                 return rVals->R_rs + rVals->R_rd;
-                /* result = mips.memory[(addr-0x00400000)/4]; */
-                /* printf("Rs:%#010x + Immd:%#010x = %#010x \n",rVals->R_rs, rVals->R_rd, addr); */
-                /* printf("mips.memory[%010x]= %010x\n\n",addr, result); */
 
             } else if(!strcmp(opName, "bne")){
 
@@ -694,7 +689,7 @@ int Execute ( DecodedInstr* d, RegVals* rVals) {
                  */
                 mips.registers[31] = mips.pc+4;
                 return d->regs.j.target << 2;
-            } else {// j instruction
+            } else {// J-format instruction
                 return (mips.pc & MASK_UPPER) | (d->regs.j.target << 2);
             } 
             
@@ -754,7 +749,7 @@ int Mem( DecodedInstr* d, int val, int *changedMem) {
     
     char opName[6] = " ";       
     getOpName(opName, d);
-    int addr2, addr, result;
+    int addr, result;
 
     // R-format
     switch (d->type) {
@@ -778,13 +773,9 @@ int Mem( DecodedInstr* d, int val, int *changedMem) {
                 addr = val;
                 result = mips.registers[d->regs.i.rt];
 
-                /* printf("Addr:%8.8x  Saddr:%8.8x Eaddr:%8.8x\n",addr, MEMORY_SPACE_START, MEMORY_SPACE_END); */
-
-
                 // If it is within the allow range save it
                 if(addr >= MEMORY_SPACE_START && addr <= MEMORY_SPACE_END){
 
-                    printf("---Store val:%d on addr:%8.8x\n", result, addr) ;
                     // Get the value from
                     // Then save the value in the specified memory
                     mips.memory[getMemI(addr)] = result;
@@ -837,7 +828,7 @@ void RegWrite( DecodedInstr* d, int val, int *changedReg) {
                 *changedReg = -1;
             } else if (!strcmp(opName, "lw" )) {
                 
-                printf("----Store val:%d on register:$%d\n", mips.memory[getMemI(val)], d->regs.i.rt);
+                // Store the data from memory to register
                 mips.registers[d->regs.i.rt] = mips.memory[getMemI(val)];
                 *changedReg = d->regs.i.rt;
 
