@@ -1,16 +1,16 @@
 .text
 
 main:
-	; addi $a1, $zero, -4
-	; addi $a2, $a1, 2
-	; addi $a3, $a2, 3
-	; jal testInstructions
+	addiu $a1, $zero, 4
+	addiu $a2, $a1, 2
+	addiu $a3, $a2, 3
+	jal testInstructions
 
 	j end
 
 testInstructions:
-	; addu $s0, $a1, $a2 
-	; addiu $s1, $a1, 5
+	addu $s0, $a1, $a2 
+	addiu $s1, $a1, 5
 	subu $s2, $a2, 1 
 	sll $s3, $a2, 1 
 	srl $s4, $a2, 1
@@ -30,7 +30,7 @@ equals:
 	beq $zero, $zero, continue 
 
 notequals:
-	addi $sp, $sp, -4
+	subu $sp, $sp, -4
 	sw $a3, 4($sp)
 	j equals
 

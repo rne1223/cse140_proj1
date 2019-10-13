@@ -84,7 +84,7 @@ runi4:
 	 $(BINDIR)/$(TARGET) -i $(SRCDIR)/$(TARGS4) 
 
 run:
-	# @echo 
+	@echo 
 	 $(BINDIR)/$(TARGET) $(SRCDIR)/$(TARGS) 
 run2:
 	@echo 

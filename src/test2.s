@@ -1,15 +1,15 @@
 .text
 
 main:
-	addi $a1, $zero, -4
-	addi $a2, $a1, 2
-	addi $a3, $a2, 3
+	addiu $a1, $zero, -4
+	addiu $a2, $a1, 2
+	addiu $a3, $a2, 3
 	jal testInstructions
 
 	j end
 
 notequals:
-	addi $sp, $sp, -4
+	addiu $sp, $sp, -4
 	sw $a3, 4($sp)
 	j equals
 
