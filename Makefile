@@ -18,6 +18,7 @@ TARGET   = sim
 TARGS    = test.dump
 TARGS2   = test2.dump
 TARGS3   = sample.dump
+TARGS4   = mem.dump
 
 CC       = gcc
 # compiling flags here
@@ -56,7 +57,7 @@ $(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c
 ###########
 # Rules
 ##########
-.PHONY: clean remove debug run run2 run3 runi test
+.PHONY: clean remove debug run run2 run3 run4 runi test
 
 clean:
 	@$(rm) $(OBJECTS)
@@ -67,7 +68,7 @@ remove: clean
 	@echo "Executable removed!
 
 debug:
-	 gdb --args $(BINDIR)/$(TARGET) $(SRCDIR)/$(TARGS)
+	 cgdb --args $(BINDIR)/$(TARGET) -r -m $(SRCDIR)/$(TARGS4)
 
 
 runi:
@@ -79,6 +80,9 @@ runi2:
 runi3:
 	 $(BINDIR)/$(TARGET) -i $(SRCDIR)/$(TARGS3) 
 
+runi4:
+	 $(BINDIR)/$(TARGET) -i $(SRCDIR)/$(TARGS4) 
+
 run:
 	# @echo 
 	 $(BINDIR)/$(TARGET) $(SRCDIR)/$(TARGS) 
@@ -88,6 +92,10 @@ run2:
 run3:
 	@echo 
 	 $(BINDIR)/$(TARGET) $(SRCDIR)/$(TARGS3) 
+run4:
+	@echo 
+	 $(BINDIR)/$(TARGET) -r -m -d $(SRCDIR)/$(TARGS4) 
+
 test:
 	@echo Running TESTS....
 	 # $(BINDIR)/vimdiff sample.output test.output

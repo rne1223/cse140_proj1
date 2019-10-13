@@ -1,15 +1,7 @@
 
 #define MAXNUMINSTRS 1024	/* max # instrs in a program */
 #define MAXNUMDATA 3072		/* max # data words */
-/** 
- * Defining some constants to retrieve bits 
- **/
-#define MASK_5      0x1f
-#define MASK_6      0x3f
-#define MASK_16     0xffff
-#define MASK_26     0x3ffffff
-// #define MASK_32     0xffffffff
-#define MASK_UPPER  0xffff0000
+
 struct SimulatedComputer {
     int memory [MAXNUMINSTRS+MAXNUMDATA];
     int registers [32];

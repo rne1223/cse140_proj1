@@ -4,8 +4,12 @@
 #
 
 		.text
-		addi	$sp,$sp,-4
-		addiu	$a1,$0,33
+		addiu	$a1,$0,16
+		sw 	$a1, ($sp)
 		sw 	$a1, 4($sp)
+		sw 	$a1, 8($sp)
+		sw 	$a1, 12($sp)
+		sw 	$a1, 16($sp)
+		sw 	$a1, 20($sp)
 		lw   	$a2, 4($sp)
 		
