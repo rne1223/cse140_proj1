@@ -1,3 +1,18 @@
+/*********************************************************
+ * Author: Alina Guitierrez & Rene Tellez Rodriguez
+ *
+ * Changelog :                                                          
+ * ===========
+ *   2019-10-07 - Rene & Alina - starting to figure it out, messing around with code
+ *   2019-10-08 - Rene & Alina - implemented most Decode
+ *   2019-10-09 - Rene         - implemented PrintFunction 
+ *   2019-10-09 - Alina        - implemented Execute
+ *   2019-10-10 - Alina & Rene - implemented Mem, RegWrite, UpdatePC
+ *   2019-10-11 - Alina & Rene - fixing bugs
+ *   2019-10-12 - Alina & Rene - fixing bugs
+*****************************************************************/
+ 
+ 
 #include <stdio.h>
 #include <stdlib.h>
 #include <netinet/in.h>
@@ -25,6 +40,8 @@ unsigned int endianSwap(unsigned int);
 // Personal functions
 void getOpName(char *, DecodedInstr*);
 void helpMessage();
+int getMemI( int );
+int validAddress(int);
 // Function Definitions
 void PrintInfo (int changedReg, int changedMem);
 // Five stages
@@ -40,16 +57,16 @@ void PrintInstruction (DecodedInstr*);
 Computer mips;
 RegVals rVals;
 
+
 /** 
   * Trying to make interactive mode user friendly 
   * Why you may ask?  "\_(ʘ_ʘ)_/" I DON'T KNOW...it helps calm down the nervers I guess
   *
-  * Thank you for reading this pointless comment...it really means alot to me. 
-  * No very professional I know, but fun :)
+  * No very professional I know, but is fun :)
   *
   * A few hours laters....Okay I need to stop adding arguments to this thing
   * 
-  * A few hours laters....maybe I should make it autocomplete lol
+  * A few hours laters....maybe I should make it autocomplete :)
   *
 */
 void helpMessage(){
@@ -61,6 +78,33 @@ void helpMessage(){
     printf("     'b' to pop instruction from statcks\n");
     printf("     'q' to quit\n\n");
     printf("Press 'Enter' for next instruction\n");
+}
+
+
+/**
+ * Map address to indexes in an array
+ * ---that way we don't have to keep subtracting by the base address and dividing
+ */
+
+int getMemI( int addr) {
+    return (addr-0x00400000)/4;
+}
+
+
+/**
+ * Check to see if an address is valid
+ *
+ * returns 1 if valid  or  0 if not
+ */
+int validAddress(int addr) {
+
+    // If it is within the allow range save it
+    if(addr >= MEMORY_SPACE_START && addr <= MEMORY_SPACE_END) {
+        return 1;
+    } else { 
+        return 0;
+    }
+
 }
 
 /*
@@ -80,10 +124,11 @@ void InitComputer (FILE* filein, int printingRegisters, int printingMemory,
         mips.registers[k] = 0;
     }
 
-    /* stack pointer - Initialize to highest address of data segment */
+    
+    /* stack pointer - Initialize to highest address of data segment *///WHY??? - this took 2 hours of my life
     /* mips.registers[29] = 0x00400000 + (MAXNUMINSTRS+MAXNUMDATA)*4; */
 
-    /* stack pointer - Initialize to lowest address of data segment */
+    /* stack pointer - Initialize to lowest address of data segment */ //- Much better
     mips.registers[29] = 0x00400000 + (MAXNUMINSTRS*4);
 
     for (k=0; k<MAXNUMINSTRS+MAXNUMDATA; k++) {
@@ -124,12 +169,8 @@ void Simulate () {
     /* Initialize the PC to the start of the code section */
     mips.pc = 0x00400000;
 
-    /** 
-     * tmps use for interactive mode
-     * and easier debugging 
-     */
-    int tmp_prMemory= mips.printingMemory;
-    int tmp_prRegisters = mips.printingRegisters;
+    // tmp used in interactive mode to print registers and Memory
+    int tmp_printReg=0, tmp_printMem=0;
 
     /*** 
       * We don't want to display the help message 
@@ -151,37 +192,58 @@ void Simulate () {
                 printf("BYE BYE\n");
                 return; // bye bye interactive mode...it was fun while it lasted :(
             } else if(s[0] == 'm'){
+                tmp_printMem = mips.printingMemory;
                 mips.printingMemory = 1;
-                mips.pc-=4; // update PC to stay with the current instruction
+                PrintInfo(-1,-1);
+                mips.printingMemory = tmp_printMem;
+                continue;
             } else if(s[0] == 'b'){
-                printf("--val:%8.8x:\n", val);
-                printf("--val:%8.8x:\n", val);
+
                 if(mips.pc < 0x00400004){
                     printf("Not enough instructions to pop\n");
                     continue;
                 }
-                /* mips.registers[rVals.R_rd || rVals.R_rt] = 0; */
-                printf("Poping an instruction\n");
-                PrintInstruction(&d);
+
+                printf("Going back and poping instr...good luck!!!\n");
                 mips.pc-=4; // update PC to two instructions back
                 val=0;
                 continue;
+
             } else if(s[0] == 'r'){
 
+                tmp_printReg = mips.printingRegisters;
                 mips.printingRegisters = 1;
-                printf("--val:%#010x:\n", val);
-                printf("--val:%8.8x:\n", val);
+                PrintInfo(-1,-1);
+                mips.printingRegisters = tmp_printReg;
+                continue;
 
-                if(mips.pc > 0x00400000)
-                    mips.pc-=4; // update PC to stay with the current instruction
+            } else if(s[0] == 'i'){
+                printf("SUPPER              MODE\n");
+                printf("       INTERACTIVE       ACTIVATED\n");
+                printf("(°ロ°) OH NOOOOOOOOO!!!!\n\n");
+                
+                while(1){
+                    printf ("SI MODE> ");
+                    fgets (s,sizeof(s),stdin);
+                    if (s[0] == 'q') {
+                        printf("\n(-‿-) FINALLY!!!! Going back to normal mode\n\n");
+                        break; // bye bye interactive mode...it was fun while it lasted :(
+                    }else {
+                        /* fgets (s,sizeof(s),stdin); */
+
+                    }
+                }
+                continue;
             } else if(s[0] == 'p'){
+
                 if(mips.pc == 0x00400000){
                     printf("No instructions have been executed\n");
                     continue;
                 }
-                printf ("Previous Executed instruction at %8.8x: %8.8x\n", mips.pc, instr);
-                PrintInstruction(&d);
-                PrintInfo (changedReg, changedMem); 
+                tmp_printMem = mips.printingMemory;
+                mips.printingMemory = 1;
+                PrintInfo(-1,-1);
+                mips.printingMemory = tmp_printMem;
                 continue;
 
             } else if(s[0] == 'v'){ 
@@ -196,6 +258,7 @@ void Simulate () {
 
                 printf("Val=%d\n", val);
                 continue;
+
             } else if(s[0] == 'h'){ 
                 helpMessage();
                 continue;
@@ -207,9 +270,6 @@ void Simulate () {
         printf ("Executing instruction at %8.8x: %8.8x\n", mips.pc, instr);
 
 
-        if(20000000>>29) {
-            printf("EXIT\n");
-        }
         // If no more instructions to fetch get out
         if(instr == 0x0){
             break;
@@ -221,6 +281,16 @@ void Simulate () {
          * Note that we reuse the d struct for each instruction.
          */
         Decode (instr, &d, &rVals);
+
+        
+        char exitOp[6] = " ";
+        getOpName(exitOp, &d);
+
+        // If No Op was found then get out
+        if(!strcmp(exitOp, " ")){
+            exit(0);
+        }
+
 
         /*Print decoded instruction*/
         PrintInstruction(&d);
@@ -252,9 +322,6 @@ void Simulate () {
         PrintInfo (changedReg, changedMem);
         printf("\n"); // printing new line to separate the instructions
 
-        // For Debugging Purposes :p
-        mips.printingMemory = tmp_prMemory;
-        mips.printingRegisters = tmp_prRegisters;
     }
 
     printf("PROGRAM DONE!!!!\n");
@@ -307,21 +374,16 @@ void PrintInfo ( int changedReg, int changedMem) {
 }
 
 /*
- *  Return the contents of memory at the given address. Simulates
+ *  return the contents of memory at the given address. simulates
  *  instruction fetch. 
  */
 unsigned int Fetch ( int addr) {
-    return mips.memory[(addr-0x00400000)/4];
-}
-
-int getMemI( int addr) {
-    return (addr-0x00400000)/4;
+    return mips.memory[getMemI(addr)];
 }
 
 
 // Get the op name 
 void getOpName(char * funct_name, DecodedInstr* d){
-
     int funct = 0;
     int op = 0;
 
@@ -383,9 +445,9 @@ void getOpName(char * funct_name, DecodedInstr* d){
                 case 5:
                     strcpy(funct_name,"bne");
                     break;
-                case 8:
-                    strcpy(funct_name,"addi");
-                    break;
+                /* case 8: */
+                /*     strcpy(funct_name,"addi"); */
+                /*     break; */
                 case 9:
                     strcpy(funct_name,"addiu");
                     break;
@@ -430,7 +492,6 @@ void getOpName(char * funct_name, DecodedInstr* d){
 
 /* Decode instr, returning decoded instruction. */
 void Decode ( unsigned int instr, DecodedInstr* d, RegVals* rVals) {
-
     int inst_op = instr>>26;  // get the first 6bits
     d->op = inst_op;
 
@@ -512,34 +573,51 @@ void Decode ( unsigned int instr, DecodedInstr* d, RegVals* rVals) {
  *  followed by a newline.
  */
 void PrintInstruction ( DecodedInstr* d) {
-
     char opName[6] = " ";
     getOpName(opName, d);
 
     // print the the type of operation
-    printf("%s ", opName);
+    printf("%s\t", opName);
 
     switch (d->type) {
 
         case 0: // Print R-format instructions
-            if(!strcmp(opName, "jr")){ // if jr then only print two values
-                printf(" %#010x\n", d->regs.r.rs);
-            }else{
-                printf(" $%d, $%d, $%d\n", d->regs.r.rd,d->regs.r.rs,d->regs.r.rt);
+            if(!strcmp(opName, "jr")) { // if jr then only print two values
+
+                printf(" $%d\n", d->regs.r.rs);
+
+            } else if(!strcmp(opName, "srl") 
+                    || !strcmp(opName, "sll")
+                    || !strcmp(opName, "addiu")) {
+
+                printf("$%d, $%d, %d\n", d->regs.r.rd, d->regs.r.rs, d->regs.r.rt);
+
+            } else{
+
+                printf("$%d, $%d, $%d\n", d->regs.r.rd, d->regs.r.rs, d->regs.r.rt);
             }
             break;
+
         case 1: // Print I-format instructions
-            if(!strcmp(opName, "lui")) {
 
-                printf(" $%d, %#010x\n", d->regs.i.rt,d->regs.i.addr_or_immed);
+            if(  !strcmp(opName, "andi") 
+              || !strcmp(opName, "ori")
+              || !strcmp(opName, "lui")) {
 
-            } else if(!strcmp(opName, "lw") || !strcmp(opName, "sw")){
+                printf("$%d, $%d, %#1x\n", d->regs.i.rt, d->regs.i.rs, d->regs.i.addr_or_immed );
+
+
+            } else if (!strcmp(opName, "lw") || !strcmp(opName, "sw")){
                 // printing 0x0000003($s1)
-                printf(" $%d, %#010x($%d)\n", d->regs.i.rt,d->regs.i.addr_or_immed, d->regs.i.rs);
+                printf("$%d, %#010x($%d)\n", d->regs.i.rt,d->regs.i.addr_or_immed, d->regs.i.rs);
 
-            } else {
-                // printing $s0, $s1, 0x00000003
-                printf(" $%d, $%d, %#010x\n", d->regs.i.rt,d->regs.i.rs,d->regs.i.addr_or_immed);
+            } else if(!strcmp(opName, "bne") || !strcmp(opName, "beq")) {
+
+                printf("$%d, $%d, %#010x\n", d->regs.i.rt, d->regs.i.rs, d->regs.i.addr_or_immed + mips.pc);
+
+            }else {
+
+                printf("$%d, $%d, %d\n", d->regs.i.rt, d->regs.i.rs, d->regs.i.addr_or_immed);
             }
             break;
         case 2: // Print J-format instructions
@@ -551,41 +629,6 @@ void PrintInstruction ( DecodedInstr* d) {
 /* Perform computation needed to execute d, returning computed value */
 int Execute ( DecodedInstr* d, RegVals* rVals) {
 
-    /**********
-      * TODO:
-      ********* 
-      * Whatever is done mark it as done
-      ***
-
-      R-format instructions to implement
-      --------------------------------
-      * addu Rdest, Rsrc1, Rsrc2    - done
-      * subu Rdest, Rsrc1, Rsrc2    - done **Mars turns "Subu" into "lui" "ori" and then subu :/
-      * and  Rdest, Rsrc1, Rsrc2    - done
-      * or   Rdest, Rsrc1, Rsrc2    - done
-      * slt  Rdest, Rsrc1, Rsrc2    - done
-      * sll  Rdest, Rsrc, shamt     - done
-      * srl  Rdest, Rsrc, shamt     - done
-
-      I-format instructions to implement
-      --------------------------    
-      * ori   Rdest, Rsrc, imm      - done
-      * andi  Rdest, Rsrc, imm      - done
-      * addiu Rdest, Rsrc1, imm     - done
-      * lui   Rdest, imm            - done
-      * beq   Rsrc1, Rsrc2, raddr   - done
-      * bne   Rsrc1, Rsrc2, raddr   - done
-      * lw    Rdest, offset (Radd)
-      * sw    Rdest, offset (Radd) 
-
-
-      J-format instructions to implement
-      --------------------------
-      * j   address                 - done
-      * jal address                 - done
-      * jr  Rsrc                    - done
-      */
-
     char opName[6] = " ";
     getOpName(opName, d);
 
@@ -595,7 +638,7 @@ int Execute ( DecodedInstr* d, RegVals* rVals) {
         case 0: // R-format instructions
 
             // Most of the code below is wrong...we need to fix :/
-            if(!strcmp(opName, "addu") || !strcmp(opName, "add")) {
+            if(!strcmp(opName, "addu") ) {
 
                 return rVals->R_rs + rVals->R_rt;        
 
@@ -746,7 +789,6 @@ void UpdatePC ( DecodedInstr* d, int val) {
  *
  */
 int Mem( DecodedInstr* d, int val, int *changedMem) {
-    
     char opName[6] = " ";       
     getOpName(opName, d);
     int addr, result;
@@ -761,11 +803,18 @@ int Mem( DecodedInstr* d, int val, int *changedMem) {
 
         case 1: // Few I-type instructions that use memory
             if (!strcmp(opName, "lw" )) {
+                addr = val;
+                // If it is within the allow range save it
+                if(validAddress(addr)) {
 
-                /* nothing to do here */
-                /* just pass the value */
-                *changedMem = -1;
-                return val;
+                    *changedMem = -1;
+                    return val;
+
+                } else { // Otherwise make them feel bad about it
+                    
+                    printf("Memory Access Exception at [%8.8x]:address[%8.8x]",mips.pc, addr);
+                 }
+
 
             } else if (!strcmp(opName, "sw" )) {
 
@@ -773,7 +822,7 @@ int Mem( DecodedInstr* d, int val, int *changedMem) {
                 result = mips.registers[d->regs.i.rt];
 
                 // If it is within the allow range save it
-                if(addr >= MEMORY_SPACE_START && addr <= MEMORY_SPACE_END) {
+                if(validAddress(addr)) {
 
                     // Get the value from
                     // Then save the value in the specified memory
@@ -781,7 +830,8 @@ int Mem( DecodedInstr* d, int val, int *changedMem) {
                     *changedMem = addr;
 
                 } else { // Otherwise make them feel bad about it
-                    printf("Can't store value:%d in memory address:%8.8x\n",result, addr);
+                    
+                    printf("Memory Access Exception at [%8.8x]:address[%8.8x]",mips.pc, addr);
                     *changedMem = -1;
                  }
 

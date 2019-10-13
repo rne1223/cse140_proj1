@@ -9,8 +9,8 @@ main:
 	j end
 
 testInstructions:
-	addu $s0, $a1, $a2 
-	addiu $s1, $a1, 5
+	; addu $s0, $a1, $a2 
+	; addiu $s1, $a1, 5
 	subu $s2, $a2, 1 
 	sll $s3, $a2, 1 
 	srl $s4, $a2, 1
