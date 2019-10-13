@@ -761,11 +761,10 @@ int Mem( DecodedInstr* d, int val, int *changedMem) {
 
         case 1: // Few I-type instructions that use memory
             if (!strcmp(opName, "lw" )) {
-                /* printf("pc changed lw"); */
-                /* mips.memory[val] = ; */
-                /* *changedMem = d->regs.i.rt; */
-                /* addr = val; */
-                /*  return mips.memory[val]; */
+
+                /* nothing to do here */
+                /* just pass the value */
+                *changedMem = -1;
                 return val;
 
             } else if (!strcmp(opName, "sw" )) {
@@ -774,18 +773,19 @@ int Mem( DecodedInstr* d, int val, int *changedMem) {
                 result = mips.registers[d->regs.i.rt];
 
                 // If it is within the allow range save it
-                if(addr >= MEMORY_SPACE_START && addr <= MEMORY_SPACE_END){
+                if(addr >= MEMORY_SPACE_START && addr <= MEMORY_SPACE_END) {
 
                     // Get the value from
                     // Then save the value in the specified memory
                     mips.memory[getMemI(addr)] = result;
                     *changedMem = addr;
 
-                } else 
+                } else { // Otherwise make them feel bad about it
                     printf("Can't store value:%d in memory address:%8.8x\n",result, addr);
-
                     *changedMem = -1;
-                    return val;
+                 }
+
+                return val;
 
             } else {
 
